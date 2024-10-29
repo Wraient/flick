@@ -1,0 +1,124 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <title>vadapav.mov</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta content="#ff6600" name="theme-color"/>
+    
+    <meta name="description" content="Simple, Fast movies and tv shows for everyone."/>
+
+    <meta name="keywords" content="movies, anime, download, watch, tv shows, online, series"/>
+    <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png"/>
+    <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32x32.png"/>
+    <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16x16.png"/>
+    <link rel="manifest" href="/assets/site.webmanifest"/>
+    <link rel="stylesheet" href="/assets/style.css"/>
+    <script>
+        (function () {
+            const userPreferredTheme = localStorage.getItem("theme");
+            if (userPreferredTheme === "light") {
+                document.documentElement.setAttribute("data-user-theme", "light");
+            } else {
+                document.documentElement.setAttribute("data-user-theme", "dark");
+            }
+        })();
+    </script>
+</head>
+<body>
+
+
+<div class="header">
+    <div class="nav-bar">
+        <div style="padding-right: 5px">
+            <a href="/">
+                <strong style="color: var(--text-color)">VADAPAV.MOV</strong>
+            </a>
+        </div>
+        <div><a href="https://discord.gg/BxSXTrp46n">Discord</a>|<a href="/contributors">Contributors</a>|<a href="/dmca">DMCA</a></div>
+    </div>
+    <div style="word-wrap: break-word">
+        <a href="#" id="theme-toggle">Go Dark?</a>
+    </div>
+</div>
+<div class="search-div">
+    <input type="search" id="search-input" placeholder=">search" autofocus=""/>
+</div>
+<div class="directory">
+    <div>
+        
+    </div>
+    <ul>
+        <li class="directory-header">
+            <div>Name</div>
+            <div>Size</div>
+        </li>
+        
+        
+            <li>
+                
+                    <div class="centerflex name-div">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                            <path
+                                    d="M9.828 3h3.982a2 2 0 0 1 1.992 2.181l-.637 7A2 2 0 0 1 13.174 14H2.825a2 2 0 0 1-1.991-1.819l-.637-7a1.99 1.99 0 0 1 .342-1.31L.5 3a2 2 0 0 1 2-2h3.672a2 2 0 0 1 1.414.586l.828.828A2 2 0 0 0 9.828 3zm-8.322.12C1.72 3.042 1.95 3 2.19 3h5.396l-.707-.707A1 1 0 0 0 6.172 2H2.5a1 1 0 0 0-1 .981l.006.139z"
+                            />
+                        </svg>
+                        <a class="directory-entry wrap" href="/2af5ba6d-958b-4c56-9ea3-3ebad0d392a6/">Succession</a>
+                    </div>
+                    <div>-</div>
+                
+            </li>
+        
+    </ul>
+</div>
+
+<script>
+    function humanReadableSize(size) {
+        if (size < 1024) return size + " bytes";
+        let i = Math.floor(Math.log(size) / Math.log(1024));
+        let num = size / Math.pow(1024, i);
+        let round = Math.round(num);
+        num = round < 10 ? num.toFixed(2) : round < 100 ? num.toFixed(1) : round;
+        return num + " " + ["KB", "MB", "GB", "TB"][i - 1];
+    }
+
+    window.addEventListener("DOMContentLoaded", () => {
+        const currentTheme = document.documentElement.getAttribute("data-user-theme");
+        
+        const themeToggle = document.getElementById("theme-toggle");
+        themeToggle.textContent = currentTheme === "dark" ? "Lights on!" : "Go dark?";
+
+        
+        const sizeElements = document.querySelectorAll(".size-div");
+        sizeElements.forEach(function (elem) {
+            const size = parseInt(elem.textContent);
+            elem.textContent = humanReadableSize(size);
+        });
+    });
+
+    document.getElementById("theme-toggle").addEventListener("click", (event) => {
+        event.preventDefault();
+        const currentTheme = document.documentElement.getAttribute("data-user-theme");
+        const newTheme = currentTheme === "dark" ? "light" : "dark";
+
+        document.documentElement.setAttribute("data-user-theme", newTheme);
+        localStorage.setItem("theme", newTheme);
+
+        const themeToggle = document.getElementById("theme-toggle");
+        themeToggle.textContent = newTheme === "dark" ? "Lights on!" : "Go dark?";
+    });
+    document.getElementById("search-input").addEventListener("keypress", function (event) {
+        if (event.key === "Enter") {
+            event.preventDefault();
+            const searchQuery = this.value.trim();
+
+            if (searchQuery.length >= 4) {
+                window.location.href = "/s/" + encodeURIComponent(searchQuery);
+            } else {
+                this.placeholder = "Enter at least 4 characters"; 
+                this.value = ""; 
+            }
+        }
+    });
+</script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'8da57b9fbbc5e1c4',t:'MTczMDIyOTIwNy4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
