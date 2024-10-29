@@ -2,22 +2,24 @@ package main
 
 import (
 	"github.com/Wraient/flick/internal"
+	"bufio"
 	"fmt"
+	"os"
+	"strings"
 )
-
 
 // Example usage:
 func main() {
-    internal.ClearScreen()
-	var query string
+    // internal.ClearScreen()
+	reader := bufio.NewReader(os.Stdin)
 	fmt.Print("Enter search query: ")
-	fmt.Scanln(&query)
+	query, _ := reader.ReadString('\n')
+	query = strings.TrimSpace(query) // Remove any trailing newline
 
-	results, err := internal.SearchMedia(query)
-	if err != nil {
-		internal.ExitFlick(err)
+	results := internal.SearchMedia(query)
+	if results == nil {
+		internal.ExitFlick(fmt.Errorf("no results found"))
 	}
 
     fmt.Printf("Results: %v\n", results)
-	// The selection and playback is handled within SearchMedia
 }
