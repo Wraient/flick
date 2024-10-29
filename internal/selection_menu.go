@@ -54,14 +54,14 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.filter = m.filter[:len(m.filter)-1]
 				updateFilter = true
 			}
-		case "down", "j":
+		case "down":
 			if m.selected < len(m.filteredKeys)-1 {
 				m.selected++
 			}
 			if m.selected >= m.scrollOffset+m.visibleItemsCount() {
 				m.scrollOffset++
 			}
-		case "up", "k":
+		case "up":
 			if m.selected > 0 {
 				m.selected--
 			}
