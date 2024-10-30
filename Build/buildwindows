@@ -1,0 +1,3 @@
+outputDir="Build"
+mkdir -p "$outputDir"
+GOOS=windows GOARCH=amd64 go build -o "$outputDir/flick.exe" -ldflags "-s -w" ./cmd/flick/main.go

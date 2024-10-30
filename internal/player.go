@@ -9,6 +9,8 @@ import (
 	"path/filepath"
 	"runtime"
 	"time"
+
+    "github.com/Microsoft/go-winio"
 )
 
 
@@ -32,7 +34,7 @@ func MPVSendCommand(ipcSocketPath string, command []interface{}) (interface{}, e
 
     if runtime.GOOS == "windows" {
         // Use named pipe for Windows
-//         conn, err = winio.DialPipe(ipcSocketPath, nil)
+        conn, err = winio.DialPipe(ipcSocketPath, nil)
     } else {
         conn, err = net.Dial("unix", ipcSocketPath)
     }

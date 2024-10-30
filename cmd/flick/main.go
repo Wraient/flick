@@ -14,6 +14,60 @@ import (
 	"github.com/Wraient/flick/internal"
 )
 
+// Replace the directory navigation code in main() with:
+func browseDirectory(dirID string) (string, error) {
+    for {
+        dir, err := internal.GetVadapav(dirID)
+        if err != nil {
+            return "", err
+        }
+
+        fileOptions := make(map[string]string)
+        
+        // Add parent directory option if not at root
+        if dir.Parent != "" {
+            fileOptions[".."] = "📁 .."
+        }
+
+        for _, file := range dir.Files {
+            if file.Dir {
+                fileOptions[file.Id] = fmt.Sprintf("📁 %s", file.Name)
+            } else if strings.HasSuffix(strings.ToLower(file.Name), ".mkv") || 
+                      strings.HasSuffix(strings.ToLower(file.Name), ".mp4") {
+                fileOptions[file.Id] = fmt.Sprintf("🎬 %s", file.Name)
+            }
+        }
+
+        if len(fileOptions) == 0 {
+            return "", fmt.Errorf("no files found in directory")
+        }
+
+        selectedFile, err := internal.DynamicSelect(fileOptions)
+        if err != nil || selectedFile.Key == "-1" {
+            return "", err
+        }
+
+        // Handle parent directory navigation
+        if selectedFile.Key == ".." {
+            dirID = dir.Parent
+            continue
+        }
+
+        // Check if selected item is a directory
+        for _, file := range dir.Files {
+            if file.Id == selectedFile.Key {
+                if file.Dir {
+                    dirID = file.Id
+                    continue
+                } else {
+                    return file.Id, nil
+                }
+            }
+        }
+    }
+}
+
+
 func main() {
 	var user internal.User
 	var show internal.TVShow
@@ -232,161 +286,125 @@ func main() {
 		return
 	}
 
-    // Get video duration
-    go func() {
-        for {
-            if user.Player.Started {
-                if user.Player.Duration == 0 {
-                    // Get video duration
-                    durationPos, err := internal.MPVSendCommand(user.Player.SocketPath, []interface{}{"get_property", "duration"})
-                    if err != nil {
-                        internal.Log("Error getting video duration: "+err.Error(), logFile)
-                    } else if durationPos != nil {
-                        if duration, ok := durationPos.(float64); ok {
-                            user.Player.Duration = int(duration + 0.5) // Round to nearest integer
-                            internal.Log(fmt.Sprintf("Video duration: %d seconds", user.Player.Duration), logFile)
-                        } else {
-                            internal.Log("Error: duration is not a float64", logFile)
+    for {
+
+        // Get video duration
+        go func() {
+            for {
+                if user.Player.Started {
+                    if user.Player.Duration == 0 {
+                        // Get video duration
+                        durationPos, err := internal.MPVSendCommand(user.Player.SocketPath, []interface{}{"get_property", "duration"})
+                        if err != nil {
+                            internal.Log("Error getting video duration: "+err.Error(), logFile)
+                        } else if durationPos != nil {
+                            if duration, ok := durationPos.(float64); ok {
+                                user.Player.Duration = int(duration + 0.5) // Round to nearest integer
+                                internal.Log(fmt.Sprintf("Video duration: %d seconds", user.Player.Duration), logFile)
+                            } else {
+                                internal.Log("Error: duration is not a float64", logFile)
+                            }
                         }
-                    }
-                    break
-                }
-            }
-            time.Sleep(1 * time.Second)
-        }
-    }()
-
-	// Playback monitoring and database updates
-	for {
-		time.Sleep(1 * time.Second)
-
-		timePos, err := internal.MPVSendCommand(user.Player.SocketPath, []interface{}{"get_property", "time-pos"})
-		if err != nil {
-            internal.Log("Error getting time position: "+err.Error(), logFile)
-			// MPV closed or error occurred
-			// Check if we reached completion percentage before starting next episode
-            if user.Player.Started { 
-                percentage := internal.PercentageWatched(show.PlaybackTime, user.Player.Duration)
-                if err != nil {
-                    internal.Log("Error getting percentage watched: "+err.Error(), logFile)
-                }
-                internal.Log(fmt.Sprintf("Percentage watched: %f", percentage), logFile)
-                internal.Log(fmt.Sprintf("Percentage to mark complete: %d", userFlickConfig.PercentageToMarkComplete), logFile)
-				if percentage >= float64(userFlickConfig.PercentageToMarkComplete) {
-                    showDetails, err := internal.GetShow(show.ID)
-                    if err != nil {
-                        internal.Log(fmt.Sprintf("Error getting show details: %v", err), logFile)
                         break
                     }
+                }
+                time.Sleep(1 * time.Second)
+            }
+        }()
 
-                    nextEp := internal.GetNextEpisode(showDetails, show.EpisodeID)
-                    if nextEp != nil {
-                        internal.FlickOut(fmt.Sprintf("Starting next episode: S%02dE%02d", nextEp.Season, nextEp.Episode))
-                        show.EpisodeID = nextEp.ID
-                        show.PlaybackTime = 0
-                        user.Player.SocketPath, err = internal.PlayWithMPV(fmt.Sprintf("%s%s", vadapavPlaybackUrl, nextEp.ID))
+        // Playback monitoring and database updates
+        skipLoop:
+        for {
+            time.Sleep(1 * time.Second)
+
+            timePos, err := internal.MPVSendCommand(user.Player.SocketPath, []interface{}{"get_property", "time-pos"})
+            if err != nil {
+                internal.Log("Error getting time position: "+err.Error(), logFile)
+                // MPV closed or error occurred
+                // Check if we reached completion percentage before starting next episode
+                if user.Player.Started { 
+                    percentage := internal.PercentageWatched(show.PlaybackTime, user.Player.Duration)
+                    if err != nil {
+                        internal.Log("Error getting percentage watched: "+err.Error(), logFile)
+                    }
+                    internal.Log(fmt.Sprintf("Percentage watched: %f", percentage), logFile)
+                    internal.Log(fmt.Sprintf("Percentage to mark complete: %d", userFlickConfig.PercentageToMarkComplete), logFile)
+                    if percentage >= float64(userFlickConfig.PercentageToMarkComplete) {
+                        showDetails, err := internal.GetShow(show.ID)
                         if err != nil {
-                            internal.Log(fmt.Sprintf("Error starting next episode: %v", err), logFile)
+                            internal.Log(fmt.Sprintf("Error getting show details: %v", err), logFile)
+                            break skipLoop
                         }
-						continue
-					}
-                    if nextEp == nil {
-                        internal.FlickOut("No more episodes found")
+
+                        nextEp := internal.GetNextEpisode(showDetails, show.EpisodeID)
+                        if nextEp != nil {
+                            internal.FlickOut(fmt.Sprintf("Starting next episode: S%02dE%02d", nextEp.Season, nextEp.Episode))
+                            show.EpisodeID = nextEp.ID
+                            show.PlaybackTime = 0
+                            // Remove MPV start from here and break the loop
+                            break skipLoop
+                        }
+                        if nextEp == nil {
+                            internal.FlickOut("No more episodes found")
+                            internal.ExitFlick("", nil)
+                        }
+                    } else {
                         internal.ExitFlick("", nil)
                     }
-				} else {
-					internal.FlickOut("Have a great day.")
-                    break
-				}
-			}
-		}
+                }
+                break skipLoop  // Add this to ensure we break the loop on any MPV error
+            }
 
-        // Episode started
-		if timePos != nil {
-            if !user.Player.Started {
-                user.Player.Started = true
-                // Set the playback speed
-                if userFlickConfig.SaveMpvSpeed {
-                    speedCmd := []interface{}{"set_property", "speed", user.Player.Speed}
-                    _, err := internal.MPVSendCommand(user.Player.SocketPath, speedCmd)
-                    if err != nil {
-                        internal.Log("Error setting playback speed: "+err.Error(), logFile)
+            // Episode started
+            if timePos != nil {
+                if !user.Player.Started {
+                    user.Player.Started = true
+                    // Set the playback speed
+                    if userFlickConfig.SaveMpvSpeed {
+                        speedCmd := []interface{}{"set_property", "speed", user.Player.Speed}
+                        _, err := internal.MPVSendCommand(user.Player.SocketPath, speedCmd)
+                        if err != nil {
+                            internal.Log("Error setting playback speed: "+err.Error(), logFile)
+                        }
                     }
                 }
-            }
 
 
-			if user.Resume {
-				internal.SeekMPV(user.Player.SocketPath, show.PlaybackTime)
-				user.Resume = false
-			}
-
-			showPosition, ok := timePos.(float64)
-			if !ok {
-				continue
-			}
-
-			// Update playback time
-			show.PlaybackTime = int(showPosition + 0.5)
-
-			// Save to database
-			err = internal.LocalUpdateShow(databaseFile, show)
-			if err != nil {
-				internal.Log(fmt.Sprintf("Error updating database: %v", err), logFile)
-			}
-		}
-	}
-}
-
-// Replace the directory navigation code in main() with:
-func browseDirectory(dirID string) (string, error) {
-    for {
-        dir, err := internal.GetVadapav(dirID)
-        if err != nil {
-            return "", err
-        }
-
-        fileOptions := make(map[string]string)
-        
-        // Add parent directory option if not at root
-        if dir.Parent != "" {
-            fileOptions[".."] = "📁 .."
-        }
-
-        for _, file := range dir.Files {
-            if file.Dir {
-                fileOptions[file.Id] = fmt.Sprintf("📁 %s", file.Name)
-            } else if strings.HasSuffix(strings.ToLower(file.Name), ".mkv") || 
-                      strings.HasSuffix(strings.ToLower(file.Name), ".mp4") {
-                fileOptions[file.Id] = fmt.Sprintf("🎬 %s", file.Name)
-            }
-        }
-
-        if len(fileOptions) == 0 {
-            return "", fmt.Errorf("no files found in directory")
-        }
-
-        selectedFile, err := internal.DynamicSelect(fileOptions)
-        if err != nil || selectedFile.Key == "-1" {
-            return "", err
-        }
-
-        // Handle parent directory navigation
-        if selectedFile.Key == ".." {
-            dirID = dir.Parent
-            continue
-        }
-
-        // Check if selected item is a directory
-        for _, file := range dir.Files {
-            if file.Id == selectedFile.Key {
-                if file.Dir {
-                    dirID = file.Id
-                    continue
-                } else {
-                    return file.Id, nil
+                if user.Resume {
+                    internal.SeekMPV(user.Player.SocketPath, show.PlaybackTime)
+                    user.Resume = false
                 }
+
+                showPosition, ok := timePos.(float64)
+                if !ok {
+                    continue
+                }
+
+                // Update playback time
+                show.PlaybackTime = int(showPosition + 0.5)
+                user.Player.Speed, err = internal.GetMPVPlaybackSpeed(user.Player.SocketPath)
+                if err != nil {
+                    internal.Log(fmt.Sprintf("Error getting playback speed: %v", err), logFile)
+                }
+                // Save to database
+                err = internal.LocalUpdateShow(databaseFile, show)
+                if err != nil {
+                    internal.Log(fmt.Sprintf("Error updating database: %v", err), logFile)
+                }
+            }
+        }
+
+        // Start the next episode after the skipLoop if we have one
+        if show.PlaybackTime == 0 {  // This indicates we're ready for next episode
+            var err error
+            user.Player.Duration = 0  // Reset duration for new episode
+            user.Player.Started = false  // Reset started flag
+            user.Player.SocketPath, err = internal.PlayWithMPV(fmt.Sprintf("%s%s", vadapavPlaybackUrl, show.EpisodeID))
+            if err != nil {
+                internal.Log(fmt.Sprintf("Error starting next episode: %v", err), logFile)
+                internal.ExitFlick("", err)
             }
         }
     }
 }
+

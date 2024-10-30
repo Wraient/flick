@@ -1,0 +1,4 @@
+outputDir="Build"
+mkdir -p "$outputDir"
+CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o "$outputDir/flick" -ldflags="-s -w" -trimpath cmd/flick/main.go
+upx --best --ultra-brute "$outputDir/flick"
