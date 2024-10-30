@@ -11,20 +11,17 @@ import (
 type SelectionOption struct {
 	Label string
 	Key   string
-	Type  string // "movie" or "show"
-	Quality string // e.g., "1080p", "720p"
 }
 
 // Model represents the application state for the selection prompt
 type Model struct {
-	options        map[string]string
+	options        map[string]string  // id -> name mapping
 	filter         string
 	filteredKeys   []SelectionOption
 	selected       int
 	terminalWidth  int
 	terminalHeight int
 	scrollOffset   int
-	showAddNew     bool
 }
 
 // Init initializes the model
@@ -109,13 +106,7 @@ func (m Model) View() string {
 				prefix = "▶ "
 			}
 
-			// Format the entry based on type and quality
-			label := entry.Label
-			if entry.Type != "" && entry.Quality != "" {
-				label = fmt.Sprintf("%s (%s, %s)", entry.Label, entry.Type, entry.Quality)
-			}
-
-			b.WriteString(fmt.Sprintf("%s%s\n", prefix, label))
+			b.WriteString(fmt.Sprintf("%s%s\n", prefix, entry.Label))
 		}
 	}
 
@@ -129,60 +120,32 @@ func (m Model) visibleItemsCount() int {
 func (m *Model) filterOptions() {
 	m.filteredKeys = []SelectionOption{}
 
-	for key, value := range m.options {
-		if strings.Contains(strings.ToLower(value), strings.ToLower(m.filter)) {
-			// Try to detect if it's a movie or show and its quality
-			entryType := "movie"
-			if strings.Contains(strings.ToLower(value), "season") || 
-			   strings.Contains(strings.ToLower(value), "episode") {
-				entryType = "show"
-			}
-
-			quality := "unknown"
-			if strings.Contains(strings.ToLower(value), "1080p") {
-				quality = "1080p"
-			} else if strings.Contains(strings.ToLower(value), "720p") {
-				quality = "720p"
-			} else if strings.Contains(strings.ToLower(value), "2160p") {
-				quality = "4K"
-			}
-
+	for id, name := range m.options {
+		if strings.Contains(strings.ToLower(name), strings.ToLower(m.filter)) {
 			m.filteredKeys = append(m.filteredKeys, SelectionOption{
-				Label:   value,
-				Key:     key,
-				Type:    entryType,
-				Quality: quality,
+				Label: name,
+				Key:   id,
 			})
 		}
 	}
 
+	// Sort by label
 	sort.Slice(m.filteredKeys, func(i, j int) bool {
-		// Sort by type first (movies before shows)
-		if m.filteredKeys[i].Type != m.filteredKeys[j].Type {
-			return m.filteredKeys[i].Type < m.filteredKeys[j].Type
-		}
-		// Then by label
 		return m.filteredKeys[i].Label < m.filteredKeys[j].Label
 	})
 
-	if m.showAddNew {
-		m.filteredKeys = append(m.filteredKeys, SelectionOption{
-			Label: "Add new media",
-			Key:   "add_new",
-		})
-	}
-
+	// Add quit option at the end
 	m.filteredKeys = append(m.filteredKeys, SelectionOption{
 		Label: "Quit",
 		Key:   "-1",
 	})
 }
 
-func DynamicSelect(options map[string]string, showAddNew bool) (SelectionOption, error) {
+// DynamicSelect shows a selection menu and returns the selected option
+func DynamicSelect(options map[string]string) (SelectionOption, error) {
 	model := &Model{
-		options:    options,
+		options:      options,
 		filteredKeys: make([]SelectionOption, 0),
-		showAddNew: showAddNew,
 	}
 
 	model.filterOptions()
@@ -199,7 +162,8 @@ func DynamicSelect(options map[string]string, showAddNew bool) (SelectionOption,
 	}
 
 	if finalSelectionModel.selected < len(finalSelectionModel.filteredKeys) {
-		return finalSelectionModel.filteredKeys[finalSelectionModel.selected], nil
+		selected := finalSelectionModel.filteredKeys[finalSelectionModel.selected]
+		return selected, nil
 	}
 	return SelectionOption{}, nil
 }
