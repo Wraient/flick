@@ -5,9 +5,15 @@ Flick is a CLI tool for managing and watching TV shows and movies directly from 
 ## **Important** 
 `Flick` uses [vadapav.mov](https://vadapav.mov) API and It also hosts the content. Please consider donating to [vadapav.mov](https://vadapav.mov)
 
-Bitcoin - bc1q8yxttnkuf3fygzxffj5wd85fgya0w39nr5tkau
+Bitcoin 
+```
+bc1q8yxttnkuf3fygzxffj5wd85fgya0w39nr5tkau
+```
 
-Monero - 42UXZfPr4SyZ4StxqNtA9HdvNr8ieSuMYdPxs3zL7qrKUnrWCMMUAuH9ARC342732VPS3KU6R8JbN15HWEdR234aPWF5ned
+Monero
+```
+42UXZfPr4SyZ4StxqNtA9HdvNr8ieSuMYdPxs3zL7qrKUnrWCMMUAuH9ARC342732VPS3KU6R8JbN15HWEdR234aPWF5ned
+```
 
 ## Features
 
