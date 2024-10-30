@@ -2,11 +2,12 @@ package main
 
 import (
 	"bufio"
+	"flag"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"runtime"
-	"strconv"
 	"strings"
 	"time"
 
@@ -25,7 +26,7 @@ func main() {
 		homeDir = os.Getenv("HOME")
 	}
 
-	configFilePath := filepath.Join(homeDir, "Projects", "flick", ".config", "flick", "flick.conf")
+	configFilePath := filepath.Join(homeDir, ".config", "flick", "flick.conf")
 
 	// load flick userFlickConfig
 	userFlickConfig, err := internal.LoadConfig(configFilePath)
@@ -36,19 +37,110 @@ func main() {
 	internal.SetGlobalConfig(&userFlickConfig)
 
 	databaseFile := filepath.Join(os.ExpandEnv(userFlickConfig.StoragePath), "shows.db")
-	logFile := "debug.log"
+	logFile := filepath.Join(os.ExpandEnv(userFlickConfig.StoragePath), "debug.log")
+
+	// Flags configured here cause userconfig needs to be changed.
+	flag.StringVar(&userFlickConfig.Player, "player", userFlickConfig.Player, "Player to use for playback (Only mpv supported currently)")
+	flag.StringVar(&userFlickConfig.StoragePath, "storage-path", userFlickConfig.StoragePath, "Path to the storage directory")
+	flag.IntVar(&userFlickConfig.PercentageToMarkComplete, "percentage-to-mark-complete", userFlickConfig.PercentageToMarkComplete, "Percentage to mark episode as complete")
+	flag.BoolVar(&userFlickConfig.SaveMpvSpeed, "save-mpv-speed", userFlickConfig.SaveMpvSpeed, "Save MPV speed setting (true/false)")
+	flag.BoolVar(&userFlickConfig.NextEpisodePrompt, "next-episode-prompt", userFlickConfig.NextEpisodePrompt, "Prompt for the next episode (true/false)")
+
+	// Boolean flags that accept true/false
+	rofiSelection := flag.Bool("rofi", false, "Open selection in rofi")
+	editConfig := flag.Bool("e", false, "Edit config file")
+	noRofi := flag.Bool("no-rofi", false, "No rofi")
+	updateScript := flag.Bool("update", false, "Update the script")
+
+	// Custom help/usage function
+	flag.Usage = func() {
+		internal.RestoreScreen()
+		fmt.Fprintf(os.Stderr, "Flick is a CLI tool to manage and watch TV shows/Movies playback.\n")
+		fmt.Fprintf(os.Stderr, "Usage of %s:\n", os.Args[0])
+		flag.PrintDefaults() // This prints the default flag information
+	}
+
+	flag.Parse()
+
+	if *updateScript {
+		repo := "wraient/flick"
+		fileName := "flick"
+
+		if err := internal.UpdateFlick(repo, fileName); err != nil {
+			internal.ExitFlick(fmt.Sprintf("Error updating executable: %v", err), err)
+		} else {
+			internal.ExitFlick("Program Updated!", nil)
+		}
+	}
+
+    if *editConfig {
+        editor := os.Getenv("EDITOR")
+        if editor == "" {
+            if runtime.GOOS == "windows" {
+                editor = "notepad"
+            } else {
+                editor = "vim" 
+            }
+        }
+        cmd := exec.Command(editor, os.ExpandEnv(configFilePath))
+        cmd.Stdin = os.Stdin
+        cmd.Stdout = os.Stdout
+        cmd.Stderr = os.Stderr
+        if err := cmd.Run(); err != nil {
+            fmt.Printf("Error opening editor: %v\n", err)
+        }
+        internal.Log(fmt.Sprintf("Editing config file: %s", os.ExpandEnv(configFilePath)), logFile)
+        internal.ExitFlick("Config file updated!", nil)
+    }
+
+	if *rofiSelection {
+		userFlickConfig.RofiSelection = true
+	}
+
+	if *noRofi || runtime.GOOS == "windows" {
+		userFlickConfig.RofiSelection = false
+	}
+
+    // Download Rofi config's if not already present
+	if userFlickConfig.RofiSelection {
+		// Define a slice of file names to check and download
+		filesToCheck := []string{
+			"selectanimepreview.rasi",
+			"selectanime.rasi",
+			"userinput.rasi",
+		}
+
+		// Call the function to check and download files
+		err := internal.CheckAndDownloadFiles(os.ExpandEnv(userFlickConfig.StoragePath), filesToCheck)
+		if err != nil {
+			internal.Log(fmt.Sprintf("Error checking and downloading files: %v\n", err), logFile)
+			internal.FlickOut(fmt.Sprintf("Error checking and downloading files: %v\n", err))
+			internal.ExitFlick("", err)
+		}
+	}
 
 	internal.ClearLog(logFile)
 	// Get all shows from database
 	shows := internal.LocalGetAllShows(databaseFile)
 	
 	if len(shows) > 0 {
-		fmt.Println("\nWould you like to continue watching a show? (y/n)")
-		reader := bufio.NewReader(os.Stdin)
-		answer, _ := reader.ReadString('\n')
-		answer = strings.TrimSpace(strings.ToLower(answer))
+		// Create options for continue watching prompt
+		continueOptions := map[string]string{
+			"y": "Continue watching",
+			"n": "Search for a new show",
+		}
 
-		if answer == "y" {
+		selectedOption, err := internal.DynamicSelect(continueOptions)
+		if err != nil {
+			internal.Log(fmt.Sprintf("Error selecting continue option: %v", err), logFile)
+			return
+		}
+
+        if selectedOption.Key == "-1" {
+            internal.ExitFlick("", nil)
+        }
+
+		if selectedOption.Key == "y" {
 			// Create options map for database shows
 			options := make(map[string]string)
 			for _, s := range shows {
@@ -62,8 +154,12 @@ func main() {
 			// Show selection menu
 			selectedShow, err := internal.DynamicSelect(options)
 			if err != nil {
-				fmt.Println("Error:", err)
+				internal.Log(fmt.Sprintf("Error selecting show: %v", err), logFile)
 				return
+			}
+
+			if selectedShow.Key == "-1" {
+                internal.ExitFlick("", nil)
 			}
 
 			// Find selected show and store in show variable
@@ -77,17 +173,28 @@ func main() {
 		}
 	}
 
+    var query string
+
 	// If not using database, search for show
 	if show.ID == "" {
-		reader := bufio.NewReader(os.Stdin)
-		fmt.Print("Enter show name: ")
-		query, _ := reader.ReadString('\n')
-		query = strings.TrimSpace(query)
-
+        if userFlickConfig.RofiSelection {
+            query, err = internal.GetUserInputFromRofi("Enter name: ")
+            if err != nil {
+                internal.Log(fmt.Sprintf("Error getting user input: %v", err), logFile)
+                internal.ExitFlick("", err)
+                return
+            }
+        } else {
+            reader := bufio.NewReader(os.Stdin)
+            fmt.Print("Enter name: ")
+            query, _ = reader.ReadString('\n')
+            query = strings.TrimSpace(query)
+        }
 		// Search and show selection code
 		searchResults, err := internal.SearchShow(query)
 		if err != nil {
-			fmt.Println("Error:", err)
+			internal.Log(fmt.Sprintf("Error searching for show: %v", err), logFile)
+			internal.ExitFlick("", err)
 			return
 		}
 
@@ -101,45 +208,29 @@ func main() {
 			return
 		}
 
-		// Get episodes for selected show
-		showDetails, err := internal.GetShow(selectedShow.Key)
+		// Replace the directory navigation section with a recursive approach
+		selectedEpisodeID, err := browseDirectory(selectedShow.Key)
 		if err != nil {
-			fmt.Println("Error:", err)
+			internal.Log(fmt.Sprintf("Error browsing directory: %v", err), logFile)
+			internal.ExitFlick("", err)
 			return
 		}
 
-		// Episode selection
-		episodeOptions := make(map[string]string)
-		for _, episode := range showDetails.EpisodesList {
-			key := fmt.Sprintf("%d_%d", episode.Season, episode.Episode)
-			episodeOptions[key] = fmt.Sprintf("S%02dE%02d: %s", episode.Season, episode.Episode, episode.Name)
-		}
-
-		selectedEp, err := internal.DynamicSelect(episodeOptions)
-		if err != nil || selectedEp.Key == "-1" {
-			return
-		}
-
-		// Parse selected episode
-		parts := strings.Split(selectedEp.Key, "_")
-		episode, _ := strconv.Atoi(parts[1])
-
-		// Store in show variable
 		show = internal.TVShow{
 			ID:           selectedShow.Key,
-			EpisodeID:    showDetails.EpisodesList[episode-1].ID,
+			EpisodeID:    selectedEpisodeID,
 			PlaybackTime: 0,
 		}
 	}
 
+    internal.FlickOut(fmt.Sprintf("Playing %s", show.EpisodeID))
 	// Start MPV with show data
 	user.Player.SocketPath, err = internal.PlayWithMPV(fmt.Sprintf("%s%s", vadapavPlaybackUrl, show.EpisodeID))
 	if err != nil {
-		fmt.Println("Error:", err)
+		internal.Log(fmt.Sprintf("Error starting MPV: %v", err), logFile)
+		internal.ExitFlick("", err)
 		return
 	}
-
-	fmt.Println("Playing with MPV at socket path:", user.Player.SocketPath)
 
     // Get video duration
     go func() {
@@ -176,7 +267,6 @@ func main() {
 			// Check if we reached completion percentage before starting next episode
             if user.Player.Started { 
                 percentage := internal.PercentageWatched(show.PlaybackTime, user.Player.Duration)
-                fmt.Println(percentage)
                 if err != nil {
                     internal.Log("Error getting percentage watched: "+err.Error(), logFile)
                 }
@@ -185,21 +275,25 @@ func main() {
 				if percentage >= float64(userFlickConfig.PercentageToMarkComplete) {
                     showDetails, err := internal.GetShow(show.ID)
                     if err != nil {
-                        fmt.Println("Error getting show details:", err)
+                        internal.Log(fmt.Sprintf("Error getting show details: %v", err), logFile)
                         break
                     }
 
                     nextEp := internal.GetNextEpisode(showDetails, show.EpisodeID)
                     if nextEp != nil {
-                        fmt.Printf("\nStarting next episode: S%02dE%02d\n", nextEp.Season, nextEp.Episode)
+                        internal.FlickOut(fmt.Sprintf("Starting next episode: S%02dE%02d", nextEp.Season, nextEp.Episode))
                         show.EpisodeID = nextEp.ID
                         show.PlaybackTime = 0
                         user.Player.SocketPath, err = internal.PlayWithMPV(fmt.Sprintf("%s%s", vadapavPlaybackUrl, nextEp.ID))
                         if err != nil {
-                            fmt.Println("Error starting next episode:", err)
+                            internal.Log(fmt.Sprintf("Error starting next episode: %v", err), logFile)
                         }
 						continue
 					}
+                    if nextEp == nil {
+                        internal.FlickOut("No more episodes found")
+                        internal.ExitFlick("", nil)
+                    }
 				} else {
 					internal.FlickOut("Have a great day.")
                     break
@@ -238,8 +332,61 @@ func main() {
 			// Save to database
 			err = internal.LocalUpdateShow(databaseFile, show)
 			if err != nil {
-				fmt.Println("Error updating database:", err)
+				internal.Log(fmt.Sprintf("Error updating database: %v", err), logFile)
 			}
 		}
 	}
+}
+
+// Replace the directory navigation code in main() with:
+func browseDirectory(dirID string) (string, error) {
+    for {
+        dir, err := internal.GetVadapav(dirID)
+        if err != nil {
+            return "", err
+        }
+
+        fileOptions := make(map[string]string)
+        
+        // Add parent directory option if not at root
+        if dir.Parent != "" {
+            fileOptions[".."] = "📁 .."
+        }
+
+        for _, file := range dir.Files {
+            if file.Dir {
+                fileOptions[file.Id] = fmt.Sprintf("📁 %s", file.Name)
+            } else if strings.HasSuffix(strings.ToLower(file.Name), ".mkv") || 
+                      strings.HasSuffix(strings.ToLower(file.Name), ".mp4") {
+                fileOptions[file.Id] = fmt.Sprintf("🎬 %s", file.Name)
+            }
+        }
+
+        if len(fileOptions) == 0 {
+            return "", fmt.Errorf("no files found in directory")
+        }
+
+        selectedFile, err := internal.DynamicSelect(fileOptions)
+        if err != nil || selectedFile.Key == "-1" {
+            return "", err
+        }
+
+        // Handle parent directory navigation
+        if selectedFile.Key == ".." {
+            dirID = dir.Parent
+            continue
+        }
+
+        // Check if selected item is a directory
+        for _, file := range dir.Files {
+            if file.Id == selectedFile.Key {
+                if file.Dir {
+                    dirID = file.Id
+                    continue
+                } else {
+                    return file.Id, nil
+                }
+            }
+        }
+    }
 }

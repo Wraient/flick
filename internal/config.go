@@ -24,8 +24,8 @@ type FlickConfig struct {
 func defaultConfigMap() map[string]string {
 	return map[string]string{
 		"Player":                  "mpv",
-		"StoragePath":             "$HOME/Projects/flick/.local/share/flick",
-		"PercentageToMarkComplete": "85",
+		"StoragePath":             "$HOME/.local/share/flick",
+		"PercentageToMarkComplete": "92",
 		"NextEpisodePrompt":       "false",
 		"RofiSelection":           "false",
 		"SaveMpvSpeed":            "true",
@@ -39,6 +39,18 @@ func SetGlobalConfig(config *FlickConfig) {
 }
 
 func GetGlobalConfig() *FlickConfig {
+	if globalConfig == nil {
+		// Create default config if not set
+		defaultConfig := FlickConfig{
+			Player:                  "mpv",
+			StoragePath:            "$HOME/.local/share/flick", 
+			PercentageToMarkComplete: 92,
+			NextEpisodePrompt:      false,
+			RofiSelection:          false,
+			SaveMpvSpeed:           true,
+		}
+		globalConfig = &defaultConfig
+	}
 	return globalConfig
 }
 

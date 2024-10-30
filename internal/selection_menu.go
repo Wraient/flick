@@ -143,6 +143,10 @@ func (m *Model) filterOptions() {
 
 // DynamicSelect shows a selection menu and returns the selected option
 func DynamicSelect(options map[string]string) (SelectionOption, error) {
+	config := GetGlobalConfig()
+	if config != nil && config.RofiSelection {
+		return RofiSelect(options, false)
+	}
 	model := &Model{
 		options:      options,
 		filteredKeys: make([]SelectionOption, 0),
