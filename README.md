@@ -111,7 +111,7 @@ yay -R flick
 ```
 </details>
 
-### [Windows Installer](https://github.com/Wraient/flick/releases/latest/download/CurdInstaller.exe)
+### [Windows Installer](https://github.com/Wraient/flick/releases/latest/download/FlickInstaller.exe)
 
 
 ## Usage
