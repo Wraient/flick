@@ -14,6 +14,16 @@ Monero
 ```
 42UXZfPr4SyZ4StxqNtA9HdvNr8ieSuMYdPxs3zL7qrKUnrWCMMUAuH9ARC342732VPS3KU6R8JbN15HWEdR234aPWF5ned
 ```
+## Demo
+
+CLI mode:
+
+https://github.com/user-attachments/assets/c0578473-d463-41b9-aef5-346ecc1b05ce
+
+Rofi mode:
+
+https://github.com/user-attachments/assets/c751fdea-472d-4748-ba9e-b8d2a4885d07
+
 
 ## Features
 
