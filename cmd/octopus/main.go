@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Wraient/flick/internal"
+	"github.com/Wraient/octopus/internal"
 )
 
 // Replace the directory navigation code in main() with:
@@ -80,25 +80,25 @@ func main() {
 		homeDir = os.Getenv("HOME")
 	}
 
-	configFilePath := filepath.Join(homeDir, ".config", "flick", "flick.conf")
+	configFilePath := filepath.Join(homeDir, ".config", "octo", "octo.conf")
 
-	// load flick userFlickConfig
-	userFlickConfig, err := internal.LoadConfig(configFilePath)
+	// load octo userOctoConfig
+	userOctoConfig, err := internal.LoadConfig(configFilePath)
 	if err != nil {
 		fmt.Println("Error loading config:", err)
 		return
 	}
-	internal.SetGlobalConfig(&userFlickConfig)
+	internal.SetGlobalConfig(&userOctoConfig)
 
-	databaseFile := filepath.Join(os.ExpandEnv(userFlickConfig.StoragePath), "shows.db")
-	logFile := filepath.Join(os.ExpandEnv(userFlickConfig.StoragePath), "debug.log")
+	databaseFile := filepath.Join(os.ExpandEnv(userOctoConfig.StoragePath), "shows.db")
+	logFile := filepath.Join(os.ExpandEnv(userOctoConfig.StoragePath), "debug.log")
 
 	// Flags configured here cause userconfig needs to be changed.
-	flag.StringVar(&userFlickConfig.Player, "player", userFlickConfig.Player, "Player to use for playback (Only mpv supported currently)")
-	flag.StringVar(&userFlickConfig.StoragePath, "storage-path", userFlickConfig.StoragePath, "Path to the storage directory")
-	flag.IntVar(&userFlickConfig.PercentageToMarkComplete, "percentage-to-mark-complete", userFlickConfig.PercentageToMarkComplete, "Percentage to mark episode as complete")
-	flag.BoolVar(&userFlickConfig.SaveMpvSpeed, "save-mpv-speed", userFlickConfig.SaveMpvSpeed, "Save MPV speed setting (true/false)")
-	flag.BoolVar(&userFlickConfig.NextEpisodePrompt, "next-episode-prompt", userFlickConfig.NextEpisodePrompt, "Prompt for the next episode (true/false)")
+	flag.StringVar(&userOctoConfig.Player, "player", userOctoConfig.Player, "Player to use for playback (Only mpv supported currently)")
+	flag.StringVar(&userOctoConfig.StoragePath, "storage-path", userOctoConfig.StoragePath, "Path to the storage directory")
+	flag.IntVar(&userOctoConfig.PercentageToMarkComplete, "percentage-to-mark-complete", userOctoConfig.PercentageToMarkComplete, "Percentage to mark episode as complete")
+	flag.BoolVar(&userOctoConfig.SaveMpvSpeed, "save-mpv-speed", userOctoConfig.SaveMpvSpeed, "Save MPV speed setting (true/false)")
+	flag.BoolVar(&userOctoConfig.NextEpisodePrompt, "next-episode-prompt", userOctoConfig.NextEpisodePrompt, "Prompt for the next episode (true/false)")
 
 	// Boolean flags that accept true/false
 	rofiSelection := flag.Bool("rofi", false, "Open selection in rofi")
@@ -109,7 +109,7 @@ func main() {
 	// Custom help/usage function
 	flag.Usage = func() {
 		internal.RestoreScreen()
-		fmt.Fprintf(os.Stderr, "Flick is a CLI tool to manage and watch TV shows/Movies playback.\n")
+		fmt.Fprintf(os.Stderr, "Octo is a CLI tool to manage and watch TV shows/Movies playback.\n")
 		fmt.Fprintf(os.Stderr, "Usage of %s:\n", os.Args[0])
 		flag.PrintDefaults() // This prints the default flag information
 	}
@@ -117,13 +117,13 @@ func main() {
 	flag.Parse()
 
 	if *updateScript {
-		repo := "wraient/flick"
-		fileName := "flick"
+		repo := "wraient/octo"
+		fileName := "octo"
 
-		if err := internal.UpdateFlick(repo, fileName); err != nil {
-			internal.ExitFlick(fmt.Sprintf("Error updating executable: %v", err), err)
+		if err := internal.UpdateOcto(repo, fileName); err != nil {
+			internal.ExitOcto(fmt.Sprintf("Error updating executable: %v", err), err)
 		} else {
-			internal.ExitFlick("Program Updated!", nil)
+			internal.ExitOcto("Program Updated!", nil)
 		}
 	}
 
@@ -144,19 +144,19 @@ func main() {
             fmt.Printf("Error opening editor: %v\n", err)
         }
         internal.Log(fmt.Sprintf("Editing config file: %s", os.ExpandEnv(configFilePath)), logFile)
-        internal.ExitFlick("Config file updated!", nil)
+        internal.ExitOcto("Config file updated!", nil)
     }
 
 	if *rofiSelection {
-		userFlickConfig.RofiSelection = true
+		userOctoConfig.RofiSelection = true
 	}
 
 	if *noRofi || runtime.GOOS == "windows" {
-		userFlickConfig.RofiSelection = false
+		userOctoConfig.RofiSelection = false
 	}
 
     // Download Rofi config's if not already present
-	if userFlickConfig.RofiSelection {
+	if userOctoConfig.RofiSelection {
 		// Define a slice of file names to check and download
 		filesToCheck := []string{
 			"selectanimepreview.rasi",
@@ -165,11 +165,11 @@ func main() {
 		}
 
 		// Call the function to check and download files
-		err := internal.CheckAndDownloadFiles(os.ExpandEnv(userFlickConfig.StoragePath), filesToCheck)
+		err := internal.CheckAndDownloadFiles(os.ExpandEnv(userOctoConfig.StoragePath), filesToCheck)
 		if err != nil {
 			internal.Log(fmt.Sprintf("Error checking and downloading files: %v\n", err), logFile)
-			internal.FlickOut(fmt.Sprintf("Error checking and downloading files: %v\n", err))
-			internal.ExitFlick("", err)
+			internal.OctoOut(fmt.Sprintf("Error checking and downloading files: %v\n", err))
+			internal.ExitOcto("", err)
 		}
 	}
 
@@ -191,7 +191,7 @@ func main() {
 		}
 
         if selectedOption.Key == "-1" {
-            internal.ExitFlick("", nil)
+            internal.ExitOcto("", nil)
         }
 
 		if selectedOption.Key == "y" {
@@ -213,7 +213,7 @@ func main() {
 			}
 
 			if selectedShow.Key == "-1" {
-                internal.ExitFlick("", nil)
+                internal.ExitOcto("", nil)
 			}
 
 			// Find selected show and store in show variable
@@ -231,11 +231,11 @@ func main() {
 
 	// If not using database, search for show
 	if show.ID == "" {
-        if userFlickConfig.RofiSelection {
+        if userOctoConfig.RofiSelection {
             query, err = internal.GetUserInputFromRofi("Enter name: ")
             if err != nil {
                 internal.Log(fmt.Sprintf("Error getting user input: %v", err), logFile)
-                internal.ExitFlick("", err)
+                internal.ExitOcto("", err)
                 return
             }
         } else {
@@ -248,7 +248,7 @@ func main() {
 		searchResults, err := internal.SearchShow(query)
 		if err != nil {
 			internal.Log(fmt.Sprintf("Error searching for show: %v", err), logFile)
-			internal.ExitFlick("", err)
+			internal.ExitOcto("", err)
 			return
 		}
 
@@ -266,7 +266,7 @@ func main() {
 		selectedEpisodeID, err := browseDirectory(selectedShow.Key)
 		if err != nil {
 			internal.Log(fmt.Sprintf("Error browsing directory: %v", err), logFile)
-			internal.ExitFlick("", err)
+			internal.ExitOcto("", err)
 			return
 		}
 
@@ -277,12 +277,12 @@ func main() {
 		}
 	}
 
-    internal.FlickOut(fmt.Sprintf("Playing %s", show.EpisodeID))
+    internal.OctoOut(fmt.Sprintf("Playing %s", show.EpisodeID))
 	// Start MPV with show data
 	user.Player.SocketPath, err = internal.PlayWithMPV(fmt.Sprintf("%s%s", vadapavPlaybackUrl, show.EpisodeID))
 	if err != nil {
 		internal.Log(fmt.Sprintf("Error starting MPV: %v", err), logFile)
-		internal.ExitFlick("", err)
+		internal.ExitOcto("", err)
 		return
 	}
 
@@ -328,8 +328,8 @@ func main() {
                         internal.Log("Error getting percentage watched: "+err.Error(), logFile)
                     }
                     internal.Log(fmt.Sprintf("Percentage watched: %f", percentage), logFile)
-                    internal.Log(fmt.Sprintf("Percentage to mark complete: %d", userFlickConfig.PercentageToMarkComplete), logFile)
-                    if percentage >= float64(userFlickConfig.PercentageToMarkComplete) {
+                    internal.Log(fmt.Sprintf("Percentage to mark complete: %d", userOctoConfig.PercentageToMarkComplete), logFile)
+                    if percentage >= float64(userOctoConfig.PercentageToMarkComplete) {
                         showDetails, err := internal.GetShow(show.ID)
                         if err != nil {
                             internal.Log(fmt.Sprintf("Error getting show details: %v", err), logFile)
@@ -338,18 +338,18 @@ func main() {
 
                         nextEp := internal.GetNextEpisode(showDetails, show.EpisodeID)
                         if nextEp != nil {
-                            internal.FlickOut(fmt.Sprintf("Starting next episode: S%02dE%02d", nextEp.Season, nextEp.Episode))
+                            internal.OctoOut(fmt.Sprintf("Starting next episode: S%02dE%02d", nextEp.Season, nextEp.Episode))
                             show.EpisodeID = nextEp.ID
                             show.PlaybackTime = 0
                             // Remove MPV start from here and break the loop
                             break skipLoop
                         }
                         if nextEp == nil {
-                            internal.FlickOut("No more episodes found")
-                            internal.ExitFlick("", nil)
+                            internal.OctoOut("No more episodes found")
+                            internal.ExitOcto("", nil)
                         }
                     } else {
-                        internal.ExitFlick("", nil)
+                        internal.ExitOcto("", nil)
                     }
                 }
                 break skipLoop  // Add this to ensure we break the loop on any MPV error
@@ -360,7 +360,7 @@ func main() {
                 if !user.Player.Started {
                     user.Player.Started = true
                     // Set the playback speed
-                    if userFlickConfig.SaveMpvSpeed {
+                    if userOctoConfig.SaveMpvSpeed {
                         speedCmd := []interface{}{"set_property", "speed", user.Player.Speed}
                         _, err := internal.MPVSendCommand(user.Player.SocketPath, speedCmd)
                         if err != nil {
@@ -402,7 +402,7 @@ func main() {
             user.Player.SocketPath, err = internal.PlayWithMPV(fmt.Sprintf("%s%s", vadapavPlaybackUrl, show.EpisodeID))
             if err != nil {
                 internal.Log(fmt.Sprintf("Error starting next episode: %v", err), logFile)
-                internal.ExitFlick("", err)
+                internal.ExitOcto("", err)
             }
         }
     }

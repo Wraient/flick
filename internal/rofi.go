@@ -13,7 +13,7 @@ import (
 func RofiSelect(options map[string]string, addanimeopt bool) (SelectionOption, error) {
 	userCurdConfig := GetGlobalConfig()
 	if userCurdConfig.StoragePath == "" {
-		userCurdConfig.StoragePath = os.ExpandEnv("${HOME}/.local/share/flick")
+		userCurdConfig.StoragePath = os.ExpandEnv("${HOME}/.local/share/octo")
 	}
 
 	// Create a slice to store the options in the order we want

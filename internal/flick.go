@@ -24,39 +24,39 @@ func RestoreScreen() {
     fmt.Print("\033[?1049l") // Switch back to the main screen buffer
 }
 
-func ExitFlick(msg string, err error) {
+func ExitOcto(msg string, err error) {
 	RestoreScreen()
-	FlickOut("Have a great day!")
+	OctoOut("Have a great day!")
 	if err != nil {
-		FlickOut(err)
+		OctoOut(err)
 		if runtime.GOOS == "windows" {
 			fmt.Println("Press Enter to exit")
 			var wait string
 			fmt.Scanln(&wait)
 			os.Exit(1)
 		} else {
-			FlickOut(fmt.Sprintf("Error: %v", err))
+			OctoOut(fmt.Sprintf("Error: %v", err))
 			os.Exit(1)
 		}
 	}
 	if msg != "" {
-		FlickOut(msg)
+		OctoOut(msg)
 	}
 	os.Exit(0)
 }
 
-func FlickOut(data interface{}) {
-	userFlickConfig := GetGlobalConfig()
-	if userFlickConfig == nil || userFlickConfig.StoragePath == "" {
+func OctoOut(data interface{}) {
+	userOctoConfig := GetGlobalConfig()
+	if userOctoConfig == nil || userOctoConfig.StoragePath == "" {
 		var homeDir string
 		if runtime.GOOS == "windows" {
 			homeDir = os.Getenv("USERPROFILE")
 		} else {
 			homeDir = os.Getenv("HOME")
 		}	
-		userFlickConfig.StoragePath = filepath.Join(homeDir, ".local", "share", "flick")
+		userOctoConfig.StoragePath = filepath.Join(homeDir, ".local", "share", "octo")
 	}
-	logFile := filepath.Join(os.ExpandEnv(userFlickConfig.StoragePath), "debug.log")
+	logFile := filepath.Join(os.ExpandEnv(userOctoConfig.StoragePath), "debug.log")
 
 	userConfig := GetGlobalConfig()
 	dataStr := fmt.Sprintf("%v", data)
@@ -117,7 +117,7 @@ func CheckAndDownloadFiles(storagePath string, filesToCheck []string) error {
 	}
 
 	// Base URL for downloading config files
-	baseURL := "https://raw.githubusercontent.com/Wraient/flick/refs/heads/main/rofi/"
+	baseURL := "https://raw.githubusercontent.com/Wraient/octo/refs/heads/main/rofi/"
 
 	// Check each file
 	for _, fileName := range filesToCheck {
@@ -151,7 +151,7 @@ func CheckAndDownloadFiles(storagePath string, filesToCheck []string) error {
 	return nil
 }
 
-func UpdateFlick(repo, fileName string) error {
+func UpdateOcto(repo, fileName string) error {
     // Get the path of the currently running executable
     executablePath, err := os.Executable()
     if err != nil {
@@ -201,7 +201,7 @@ func UpdateFlick(repo, fileName string) error {
     if err := os.Rename(tmpPath, executablePath); err != nil {
         return fmt.Errorf("failed to replace the current executable: %v", err)
     }
-    FlickOut(fmt.Sprintf("Downloaded curd executable to %v", executablePath))
+    OctoOut(fmt.Sprintf("Downloaded curd executable to %v", executablePath))
 
 	if runtime.GOOS != "windows" {
 		// Ensure the new file has executable permissions

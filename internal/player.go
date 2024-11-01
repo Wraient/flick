@@ -10,13 +10,13 @@ import (
 	"runtime"
 	"time"
 
-    "github.com/Microsoft/go-winio"
+    // "github.com/Microsoft/go-winio"
 )
 
 
 func PlayWithMPV(url string) (string, error) {	
 	// Create a unique socket path in /tmp
-	socketPath := filepath.Join(os.TempDir(), fmt.Sprintf("mpv-socket-flick-%d", time.Now().UnixNano()))
+	socketPath := filepath.Join(os.TempDir(), fmt.Sprintf("mpv-socket-octo-%d", time.Now().UnixNano()))
 
 	// Start mpv with IPC socket and fullscreen
 	cmd := exec.Command("mpv", "--fs", "--input-ipc-server="+socketPath, url)
@@ -34,7 +34,7 @@ func MPVSendCommand(ipcSocketPath string, command []interface{}) (interface{}, e
 
     if runtime.GOOS == "windows" {
         // Use named pipe for Windows
-        conn, err = winio.DialPipe(ipcSocketPath, nil)
+        // conn, err = winio.DialPipe(ipcSocketPath, nil)
     } else {
         conn, err = net.Dial("unix", ipcSocketPath)
     }
@@ -94,17 +94,17 @@ func GetMPVPausedStatus(ipcSocketPath string) (bool, error) {
 }
 
 func GetMPVPlaybackSpeed(ipcSocketPath string) (float64, error) {
-	userFlickConfig := GetGlobalConfig()
-	if userFlickConfig == nil || userFlickConfig.StoragePath == "" {
+	userOctoConfig := GetGlobalConfig()
+	if userOctoConfig == nil || userOctoConfig.StoragePath == "" {
 		var homeDir string
 		if runtime.GOOS == "windows" {
 			homeDir = os.Getenv("USERPROFILE")
 		} else {
 			homeDir = os.Getenv("HOME")
 		}	
-		userFlickConfig.StoragePath = filepath.Join(homeDir, ".local", "share", "flick")
+		userOctoConfig.StoragePath = filepath.Join(homeDir, ".local", "share", "octo")
 	}
-	logFile := filepath.Join(os.ExpandEnv(userFlickConfig.StoragePath), "debug.log")
+	logFile := filepath.Join(os.ExpandEnv(userOctoConfig.StoragePath), "debug.log")
 
     speed, err := MPVSendCommand(ipcSocketPath, []interface{}{"get_property", "speed"})
     if err != nil || speed == nil {

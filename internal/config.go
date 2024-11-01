@@ -10,8 +10,8 @@ import (
 	"strings"
 )
 
-// FlickConfig struct with field names that match the config keys
-type FlickConfig struct {
+// OctoConfig struct with field names that match the config keys
+type OctoConfig struct {
 	Player                  string `config:"Player"`
 	StoragePath             string `config:"StoragePath"`
 	PercentageToMarkComplete int    `config:"PercentageToMarkComplete"`
@@ -24,7 +24,7 @@ type FlickConfig struct {
 func defaultConfigMap() map[string]string {
 	return map[string]string{
 		"Player":                  "mpv",
-		"StoragePath":             "$HOME/.local/share/flick",
+		"StoragePath":             "$HOME/.local/share/octo",
 		"PercentageToMarkComplete": "92",
 		"NextEpisodePrompt":       "false",
 		"RofiSelection":           "false",
@@ -32,18 +32,18 @@ func defaultConfigMap() map[string]string {
 	}
 }
 
-var globalConfig *FlickConfig
+var globalConfig *OctoConfig
 
-func SetGlobalConfig(config *FlickConfig) {
+func SetGlobalConfig(config *OctoConfig) {
 	globalConfig = config
 }
 
-func GetGlobalConfig() *FlickConfig {
+func GetGlobalConfig() *OctoConfig {
 	if globalConfig == nil {
 		// Create default config if not set
-		defaultConfig := FlickConfig{
+		defaultConfig := OctoConfig{
 			Player:                  "mpv",
-			StoragePath:            "$HOME/.local/share/flick", 
+			StoragePath:            "$HOME/.local/share/octo", 
 			PercentageToMarkComplete: 92,
 			NextEpisodePrompt:      false,
 			RofiSelection:          false,
@@ -55,23 +55,23 @@ func GetGlobalConfig() *FlickConfig {
 }
 
 
-// LoadConfig reads or creates the config file, adds missing fields, and returns the populated FlickConfig struct
-func LoadConfig(configPath string) (FlickConfig, error) {
+// LoadConfig reads or creates the config file, adds missing fields, and returns the populated OctoConfig struct
+func LoadConfig(configPath string) (OctoConfig, error) {
 	configPath = os.ExpandEnv(configPath) // Substitute environment variables like $HOME
 
 	// Check if config file exists
 	if _, err := os.Stat(configPath); os.IsNotExist(err) {
 		// Create the config file with default values if it doesn't exist
-		FlickOut("Config file not found. Creating default config...")
+		OctoOut("Config file not found. Creating default config...")
 		if err := createDefaultConfig(configPath); err != nil {
-			return FlickConfig{}, fmt.Errorf("error creating default config file: %v", err)
+			return OctoConfig{}, fmt.Errorf("error creating default config file: %v", err)
 		}
 	}
 
 	// Load the config from file
 	configMap, err := loadConfigFromFile(configPath)
 	if err != nil {
-		return FlickConfig{}, fmt.Errorf("error loading config file: %v", err)
+		return OctoConfig{}, fmt.Errorf("error loading config file: %v", err)
 	}
 
 	// Add missing fields to the config map
@@ -87,11 +87,11 @@ func LoadConfig(configPath string) (FlickConfig, error) {
 	// Write updated config back to file if there were any missing fields
 	if updated {
 		if err := saveConfigToFile(configPath, configMap); err != nil {
-			return FlickConfig{}, fmt.Errorf("error saving updated config file: %v", err)
+			return OctoConfig{}, fmt.Errorf("error saving updated config file: %v", err)
 		}
 	}
 
-	// Populate the FlickConfig struct from the config map
+	// Populate the OctoConfig struct from the config map
 	config := populateConfig(configMap)
 
 	return config, nil
@@ -179,9 +179,9 @@ func saveConfigToFile(path string, configMap map[string]string) error {
 	return writer.Flush()
 }
 
-// Populate the FlickConfig struct from a map
-func populateConfig(configMap map[string]string) FlickConfig {
-	config := FlickConfig{}
+// Populate the OctoConfig struct from a map
+func populateConfig(configMap map[string]string) OctoConfig {
+	config := OctoConfig{}
 	configValue := reflect.ValueOf(&config).Elem()
 
 	for i := 0; i < configValue.NumField(); i++ {

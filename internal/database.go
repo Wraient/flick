@@ -73,14 +73,14 @@ func LocalGetAllShows(databaseFile string) []TVShow {
 	// Ensure the directory exists
 	dir := filepath.Dir(databaseFile)
 	if err := os.MkdirAll(dir, 0755); err != nil {
-		FlickOut(fmt.Sprintf("Error creating directory: %v", err))
+		OctoOut(fmt.Sprintf("Error creating directory: %v", err))
 		return shows
 	}
 
 	// Open the file, create if it doesn't exist
 	file, err := os.OpenFile(databaseFile, os.O_RDONLY|os.O_CREATE, 0644)
 	if err != nil {
-		FlickOut(fmt.Sprintf("Error opening or creating file: %v", err))
+		OctoOut(fmt.Sprintf("Error opening or creating file: %v", err))
 		return shows
 	}
 	defer file.Close()
@@ -88,7 +88,7 @@ func LocalGetAllShows(databaseFile string) []TVShow {
 	// If the file was just created, return empty list
 	fileInfo, err := file.Stat()
 	if err != nil {
-		FlickOut(fmt.Sprintf("Error getting file info: %v", err))
+		OctoOut(fmt.Sprintf("Error getting file info: %v", err))
 		return shows
 	}
 	if fileInfo.Size() == 0 {
@@ -98,7 +98,7 @@ func LocalGetAllShows(databaseFile string) []TVShow {
 	reader := csv.NewReader(file)
 	records, err := reader.ReadAll()
 	if err != nil {
-		FlickOut(fmt.Sprintf("Error reading file: %v", err))
+		OctoOut(fmt.Sprintf("Error reading file: %v", err))
 		return shows
 	}
 
@@ -122,7 +122,7 @@ func LocalGetAllShows(databaseFile string) []TVShow {
 // Function to parse a single row of show data
 func parseShowRow(row []string) *TVShow {
 	if len(row) < 3 {
-		FlickOut(fmt.Sprintf("Invalid row format: %v", row))
+		OctoOut(fmt.Sprintf("Invalid row format: %v", row))
 		return nil
 	}
 

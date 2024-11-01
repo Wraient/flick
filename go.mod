@@ -1,4 +1,4 @@
-module github.com/Wraient/flick
+module github.com/Wraient/octopus
 
 go 1.23.2
 
