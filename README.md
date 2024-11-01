@@ -1,9 +1,9 @@
-# Flick
+# Octopus
 
-Flick is a CLI tool for managing and watching TV shows and movies directly from the terminal or using Rofi for a GUI selection. Designed for simplicity and control, Flick allows seamless playback and tracking of episodes with customizable options.
+Octopus is a CLI tool for managing and watching TV shows and movies directly from the terminal or using Rofi for a GUI selection. Designed for simplicity and control, Octopus allows seamless playback and tracking of episodes with customizable options.
 
 ## **Important** 
-`Flick` uses [vadapav.mov](https://vadapav.mov) API and It also hosts the content. Please consider donating to [vadapav.mov](https://vadapav.mov)
+`Octopus` uses [vadapav.mov](https://vadapav.mov) API and It also hosts the content. Please consider donating to [vadapav.mov](https://vadapav.mov)
 
 Bitcoin 
 ```
@@ -34,7 +34,7 @@ https://github.com/user-attachments/assets/c751fdea-472d-4748-ba9e-b8d2a4885d07
 - **Customizable through CLI options**: Toggle between CLI and Rofi interface, configure playback speed, and more.
 
 ## Installing and Setup
-> **Note**: `Flick` requires `mpv`, `rofi` for Video playback and Rofi support. These are included in the installation instructions below for each distribution.
+> **Note**: `Octopus` requires `mpv`, `rofi` for Video playback and Rofi support. These are included in the installation instructions below for each distribution.
 
 ### Linux
 <details>
@@ -43,20 +43,20 @@ https://github.com/user-attachments/assets/c751fdea-472d-4748-ba9e-b8d2a4885d07
 Using Yay
 
 ```
-yay -Sy flick
+yay -Sy octopus
 ```
 
 or using Paru:
 
 ```
-paru -Sy flick
+paru -Sy octopus
 ```
 
 Or, to manually clone and install:
 
 ```bash
-git clone https://aur.archlinux.org/flick.git
-cd flick
+git clone https://aur.archlinux.org/octopus.git
+cd octopus
 makepkg -si
 sudo pacman -S rofi 
 ```
@@ -68,10 +68,10 @@ sudo pacman -S rofi
 ```bash
 sudo apt update
 sudo apt install mpv curl rofi
-curl -Lo flick https://github.com/Wraient/flick/releases/latest/download/flick
-chmod +x flick
-sudo mv flick /usr/local/bin/
-flick
+curl -Lo octopus https://github.com/Wraient/octopus/releases/latest/download/octopus
+chmod +x octopus
+sudo mv octopus /usr/local/bin/
+octopus
 ```
 </details>
 
@@ -81,10 +81,10 @@ flick
 ```bash
 sudo dnf update
 sudo dnf install mpv curl rofi
-curl -Lo flick https://github.com/Wraient/flick/releases/latest/download/flick
-chmod +x flick
-sudo mv flick /usr/local/bin/
-flick
+curl -Lo octopus https://github.com/Wraient/octopus/releases/latest/download/octopus
+chmod +x octopus
+sudo mv octopus /usr/local/bin/
+octopus
 ```
 </details>
 
@@ -94,10 +94,10 @@ flick
 ```bash
 sudo zypper refresh
 sudo zypper install mpv curl rofi
-curl -Lo flick https://github.com/Wraient/flick/releases/latest/download/flick
-chmod +x flick
-sudo mv flick /usr/local/bin/
-flick
+curl -Lo octopus https://github.com/Wraient/octopus/releases/latest/download/octopus
+chmod +x octopus
+sudo mv octopus /usr/local/bin/
+octopus
 ```
 </details>
 
@@ -106,10 +106,10 @@ flick
 
 ```bash
 # Install mpv, curl, rofi
-curl -Lo flick https://github.com/Wraient/flick/releases/latest/download/flick
-chmod +x flick
-sudo mv flick /usr/local/bin/
-flick
+curl -Lo octopus https://github.com/Wraient/octopus/releases/latest/download/octopus
+chmod +x octopus
+sudo mv octopus /usr/local/bin/
+octopus
 ```
 </details>
 
@@ -117,36 +117,36 @@ flick
 <summary>Uninstallation</summary>
 
 ```bash
-sudo rm /usr/local/bin/flick
+sudo rm /usr/local/bin/octopus
 ```
 
 For AUR-based distributions:
 
 ```bash
-yay -R flick
+yay -R octopus
 ```
 </details>
 
-### [Windows Installer](https://github.com/Wraient/flick/releases/latest/download/FlickInstaller.exe)
+### [Windows Installer](https://github.com/Wraient/octopus/releases/latest/download/OctopusInstaller.exe)
 
 
 ## Usage
 
-Run `flick -h` to see available commands and options:
+Run `octopus -h` to see available commands and options:
 
 Here's a table version for the command options:
 
 | Option                          | Description                                                                          | Default                     |
 |---------------------------------|--------------------------------------------------------------------------------------|-----------------------------|
-| `-e`                            | Edit the Flick configuration file                                                    | N/A                         |
+| `-e`                            | Edit the Octopus configuration file                                                    | N/A                         |
 | `-next-episode-prompt`          | Prompt for the next episode playback (accepts true/false)                            | N/A                         |
 | `-no-rofi`                      | Disable the Rofi interface; run in CLI mode                                          | N/A                         |
 | `-percentage-to-mark-complete`  | Set the percentage of an episode to mark as complete                                 | `92`                        |
 | `-player`                       | Set player for playback (only MPV supported)                                         | `"mpv"`                     |
 | `-rofi`                         | Enable Rofi interface for selection                                                  | N/A                         |
 | `-save-mpv-speed`               | Save MPV speed setting (accepts true/false)                                          | `true`                      |
-| `-storage-path`                 | Define custom path for storage directory                                             | `$HOME/.local/share/flick`  |
-| `-update`                       | Update the Flick script                                                              | N/A                         |
+| `-storage-path`                 | Define custom path for storage directory                                             | `$HOME/.local/share/octopus`  |
+| `-update`                       | Update the Octopus script                                                              | N/A                         |
 
 This makes it easy to scan and find each option’s purpose and default values!
 
@@ -154,22 +154,22 @@ This makes it easy to scan and find each option’s purpose and default values!
 
 - **Watch with Rofi interface**:
   ```
-  flick -rofi
+  octopus -rofi
   ```
 - **Play next episode in CLI**:
   ```
-  flick -next-episode-prompt
+  octopus -next-episode-prompt
   ```
 - **Change storage path**:
   ```
-  flick -storage-path="/custom/path"
+  octopus -storage-path="/custom/path"
   ```
 
 ## Configuration
 
-Edit the Flick configuration file to customize settings:
+Edit the Octopus configuration file to customize settings:
 ```
-flick -e
+octopus -e
 ```
 
 ## Dependencies
@@ -181,7 +181,7 @@ flick -e
 
 ## License
 
-Flick is open-source software licensed under the [MIT License](LICENSE).
+Octopus is open-source software licensed under the [MIT License](LICENSE).
 
 # Credits
 - [Lobster](https://github.com/justchokingaround/lobster) - For the motivation
