@@ -43,13 +43,13 @@ https://github.com/user-attachments/assets/c751fdea-472d-4748-ba9e-b8d2a4885d07
 Using Yay
 
 ```
-yay -Sy octopus
+yay -Sy octopus-player
 ```
 
 or using Paru:
 
 ```
-paru -Sy octopus
+paru -Sy octopus-player
 ```
 
 Or, to manually clone and install:
